@@ -1,0 +1,70 @@
+# Django-specific files
+*.log
+local_settings.py
+dev_database.db
+media/*
+static/*
+manifest.json   
+.env 
+# Virtual environment and build/package folders
+venv/
+env/
+pyvenv.cfg
+build/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Python bytecode and optimized files
+__pycache__/
+*.pyc
+*.pyo
+*.optimized
+
+# IDE/editor temporary files
+# Replace with relevant extensions for your IDE
+*.idea/
+*.swo
+.vscode/
+.DS_Store*
+
+# Testing and coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+hypothesis/
+
+# Temporary files and cache
+*.pid
+*~
+*.db-lock
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# User authentication settings (if not committed separately)
+secrets.py
+
+# Third-party library cache
+.mypy_cache/
+
+# Static site generators build directories
+_site/
+
+# Specific to recipe_share (adjust accordingly)
+# - Add any temporary or generated files specific to your project
