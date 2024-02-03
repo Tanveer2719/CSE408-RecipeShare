@@ -41,6 +41,8 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
         }
     response = requests.request("GET", url, headers=headers, params=querystring)
     
+    return response.json()
+    
     new_response = []
     
     for recipe in response.json():
