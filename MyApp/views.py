@@ -45,9 +45,9 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
     for recipe in response.json():
         # create url-friendly title
         url_friendly_title = recipe.get("title", "").lower().replace(" ", "-")
-        ingredients = [ {"name": ingredient["name"]} 
+        ingredients = [ingredient["name"] 
                        for ingredient in recipe["missedIngredients"]
-                       ] + [{"name": ingredient["name"]} 
+                       ] + [ingredient["name"]
                         for ingredient in recipe["usedIngredients"]]
         
         new_recipe = {
