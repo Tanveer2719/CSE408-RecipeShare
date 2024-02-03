@@ -25,23 +25,20 @@ def index(request):
 
 def get_recipe_list(ingredients, number, ignorePantry=True):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
-    
-    print(ingredients)
-    
+        
     querystring = {
         "ingredients":ingredients,
         "number": str(number),
         "ignorePantry":ignorePantry,
         }
     
-    
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': settings.SPOONACULAR_API_KEY,
         }
+    
     response = requests.request("GET", url, headers=headers, params=querystring)
     
-    return response.json()
     
     new_response = []
     
@@ -60,6 +57,7 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
             "link": f"https://spoonacular.com/recipes/{url_friendly_title}-{recipe['id']}"
         }
         new_response.append(new_recipe)
+        
     
     return new_response
 
