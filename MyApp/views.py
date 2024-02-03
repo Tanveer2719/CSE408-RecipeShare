@@ -142,7 +142,10 @@ def photoInfo(request):
     new_response = get_recipe_list(ingredients_name, 10, True)    
 
     # Send JSON response
-    return Response(json.dumps(new_response), status=200)
+    response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
+    response["Content-Type"] = "application/json"
+    return response
+
 
 @csrf_exempt  
 @api_view(['POST'])
