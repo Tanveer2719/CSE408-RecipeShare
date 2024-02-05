@@ -27,6 +27,7 @@ class CustomUser(AbstractBaseUser):
     image = models.CharField(max_length=1000, default='')
     last_login = models.DateTimeField('last login', default=timezone.now)
     date_joined = models.DateTimeField('date joined', default=timezone.now)
+    is_admin = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 

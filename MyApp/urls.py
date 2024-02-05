@@ -19,6 +19,8 @@ urlpatterns = [
     path('user/logout/', user_views.user_logout, name='logout'),
     path('user/image/upload/', user_views.upload_user_image, name='upload_user_image'),
     path('user/image/update/', user_views.update_user_image, name='update_user_image'),
+    path('user/get/all/', user_views.get_all_users, name='get_all_users'),
+    path('user/delete/', user_views.delete_user, name='delete_user'),
     
     # user notifications
     path('user/notification/all/', user_views.get_notifications, name='getNotifications'),

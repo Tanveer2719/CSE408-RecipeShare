@@ -407,5 +407,18 @@ def get_recipe_details(request):
     except Exception as e:
         return Response(str(e), status=401)
 
+       
+@api_view(['GET'])
+def get_all_users(request):
+    users = CustomUser.objects.all()
+    return Response(CustomUserSerializer(users, many=True).data, status=200)
 
-        
+
+@csrf_exempt
+@api_view(['DELETE'])
+def delete_user(request):
+    data = json.loads(request.body.decode('utf-8'))
+    user_id = data.get('user_id')
+    user = CustomUser.objects.get(id=user_id)
+    user.delete()
+    return Response({'message': 'User deleted successfully'}, status=200)

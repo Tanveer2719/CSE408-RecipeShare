@@ -28,7 +28,7 @@ class StepSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'name', 'email', 'image', 'date_joined', 'last_login')
+        fields = ('id', 'name', 'email', 'image', 'date_joined', 'last_login', 'is_admin')
 
 # when only the username is wanted 
 class CustomUserSerializer(serializers.ModelSerializer):

@@ -146,7 +146,6 @@ def photoInfo(request):
     response["Content-Type"] = "application/json"
     return response
 
-
 @csrf_exempt  
 @api_view(['POST'])
 def calculateCalorie(request):
@@ -234,6 +233,4 @@ def get_all_recipe(request):
 def get_latest_recipes(request):
     recipes = Recipe.objects.all().order_by('-last_edited')[:10]
     return Response(RecipeSerializer(recipes, many=True).data, status=200)
-
-
 
