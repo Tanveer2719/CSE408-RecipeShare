@@ -422,3 +422,13 @@ def delete_user(request):
     user = CustomUser.objects.get(id=user_id)
     user.delete()
     return Response({'message': 'User deleted successfully'}, status=200)
+
+@csrf_exempt
+@api_view(['PUT'])
+def user_add_admin(request):
+    data = json.loads(request.body.decode('utf-8'))
+    user_id = data.get('user_id')
+    user = CustomUser.objects.get(id=user_id)
+    user.is_admin = True
+    user.save()
+    return Response({'message': 'User is now an admin'}, status=200)
