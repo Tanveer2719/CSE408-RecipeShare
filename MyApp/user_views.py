@@ -411,7 +411,7 @@ def get_recipe_details(request):
 @api_view(['GET'])
 def get_all_users(request):
     users = CustomUser.objects.all()
-    return Response(CustomUserSerializer(users, many=True).data, status=200)
+    return Response(UserSerializer(users, many=True).data, status=200)
 
 
 @csrf_exempt
