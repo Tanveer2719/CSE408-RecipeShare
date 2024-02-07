@@ -30,12 +30,12 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
         "ingredients":ingredients,
         "number": str(number),
         "ignorePantry":ignorePantry,
-        }
+    }
     
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': settings.SPOONACULAR_API_KEY,
-        }
+    }
     
     response = requests.request("GET", url, headers=headers, params=querystring)
     
@@ -206,7 +206,7 @@ def getRecipeFromIngredients(request):
     
     ingredients = json_body.get("ingredients")
     recipe_count = json_body.get("number", "1"),
-    ignore_pantry = json_body.get("ignorePantry", True),
+    ignore_pantry = True,
          
     new_response = get_recipe_list(ingredients, recipe_count, ignore_pantry)
     
