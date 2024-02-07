@@ -205,8 +205,8 @@ def getRecipeFromIngredients(request):
     json_body = json.loads(request.body.decode('utf-8'))
     
     ingredients = json_body.get("ingredients")
-    recipe_count = json_body.get("number", "1"),
-    ignore_pantry = True,
+    recipe_count = json_body.get("number", "1")
+    ignore_pantry = True
          
     new_response = get_recipe_list(ingredients, recipe_count, ignore_pantry)
     
