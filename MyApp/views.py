@@ -210,7 +210,10 @@ def getRecipeFromIngredients(request):
          
     new_response = get_recipe_list(ingredients, recipe_count, ignore_pantry)
     
-    return Response(json.dumps(new_response), status=200)
+    # Send JSON response
+    response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
+    response["Content-Type"] = "application/json"
+    return response
                
 @csrf_exempt  
 @api_view(['POST'])

@@ -10,11 +10,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = serializers.JSONField()
     tags = serializers.JSONField()
     steps = serializers.SerializerMethodField()
+    userInfo = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'title','description','cooking_time', 'difficulty_level', 'image','video','ingredients',
-                  'tags','rating','meal_type','last_edited','reviews','user','steps')
+                  'tags','rating','meal_type','last_edited','reviews','user','steps', 'userInfo')
 
     def get_steps(self, obj):
         return StepSerializer(obj.recipesteps_set.all(), many=True).data
