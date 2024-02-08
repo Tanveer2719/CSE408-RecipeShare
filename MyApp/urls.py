@@ -44,6 +44,9 @@ urlpatterns = [
     path('recipe/get/all/', views.get_all_recipe, name='get_all_recipe'),
     path('recipe/get/latest/', views.get_latest_recipes, name='get_latest_recipes'),
     
+    #admin options
+    path('recipe/delete/', views.delete_recipe, name='delete_recipe'),
+    
     
     #### Blog ####
     path('blog/get/all/', blog_views.get_all_blogs, name='get_all_blog'),

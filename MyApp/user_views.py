@@ -406,8 +406,7 @@ def get_recipe_details(request):
         return Response(RecipeSerializer(recipe).data, status=200)
     except Exception as e:
         return Response(str(e), status=401)
-
-       
+     
 @api_view(['GET'])
 def get_all_users(request):
     users = CustomUser.objects.all()

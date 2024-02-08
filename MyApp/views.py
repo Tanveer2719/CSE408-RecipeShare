@@ -237,3 +237,16 @@ def get_latest_recipes(request):
     recipes = Recipe.objects.all().order_by('-last_edited')[:10]
     return Response(RecipeSerializer(recipes, many=True).data, status=200)
 
+@csrf_exempt
+@api_view(['DELETE'])
+def delete_recipe(request):
+    data = json.loads(request.body.decode('utf-8'))
+    try:
+        recipe_id = data.get('recipe_id')
+        recipe = Recipe.objects.get(id=recipe_id)
+        recipe.delete()
+        return Response({'message': 'Recipe deleted successfully'}, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+    
+
