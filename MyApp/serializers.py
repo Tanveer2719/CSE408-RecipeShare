@@ -15,10 +15,18 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'title','description','cooking_time', 'difficulty_level', 'image','video','ingredients',
-                  'tags','rating','meal_type','last_edited','reviews','user','steps', 'userInfo')
+                  'tags','rating','meal_type','last_edited','reviews','steps', 'userInfo')
 
     def get_steps(self, obj):
         return StepSerializer(obj.recipesteps_set.all(), many=True).data
+    def get_userInfo(self, obj):
+        return CustomUserSerializer(obj.user).data
+    
+class MinimizedRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'title','description','ingredients',
+                  'tags','rating','meal_type','last_edited',)
     
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
