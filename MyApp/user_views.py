@@ -113,12 +113,12 @@ def user_login(request):
 def user_details(request):
     data = json.loads(request.body.decode('utf-8'))
     token = data.get('jwt') 
+    print(token)
        
     if not token:
         return JsonResponse({'error': 'Login required'}, status=401)
     
     try:
-        
         user = get_user(token)
         serializer = UserSerializer(user)
         return Response({'user_details': serializer.data}, status=200)
@@ -431,3 +431,11 @@ def user_add_admin(request):
     user.is_admin = True
     user.save()
     return Response({'message': 'User is now an admin'}, status=200)
+
+@csrf_exempt
+@api_view(['POST'])
+def get_user_details(request):
+    data = json.loads(request.body.decode('utf-8'))
+    user_id = data.get('user_id')
+    user = CustomUser.objects.get(id=user_id)
+    return Response(UserSerializer(user).data, status=200)

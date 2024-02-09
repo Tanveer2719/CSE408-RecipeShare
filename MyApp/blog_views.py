@@ -153,6 +153,7 @@ def add_comment(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
   
+@csrf_exempt
 @api_view(['DELETE'])
 def delete_blog(request):
     json_data = json.loads(request.body.decode('utf-8'))

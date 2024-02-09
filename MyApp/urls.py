@@ -22,6 +22,7 @@ urlpatterns = [
     path('user/get/all/', user_views.get_all_users, name='get_all_users'),
     path('user/delete/', user_views.delete_user, name='delete_user'),
     path('user/add/admin/', user_views.user_add_admin, name='add_admin'),
+    path('user/detailsFromId/', user_views.get_user_details, name='view user'),
     
     # user notifications
     path('user/notification/all/', user_views.get_notifications, name='getNotifications'),
@@ -43,8 +44,6 @@ urlpatterns = [
     path('recipe/get/', views.get_recipe, name='get_recipe'),
     path('recipe/get/all/', views.get_all_recipe, name='get_all_recipe'),
     path('recipe/get/latest/', views.get_latest_recipes, name='get_latest_recipes'),
-    
-    #admin options
     path('recipe/delete/', views.delete_recipe, name='delete_recipe'),
     
     

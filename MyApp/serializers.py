@@ -78,7 +78,7 @@ class BlogSerializerForAll(serializers.ModelSerializer):
     user = CustomUserSerializer()
     class Meta:
         model = BlogPosts
-        fields = ['id','title','publication_date', 'image', 'last_modification_date',
+        fields = ['id','title','summary','publication_date', 'image', 'last_modification_date',
                   'tags', 'ratings', 'user']
         
         

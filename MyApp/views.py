@@ -229,7 +229,7 @@ def get_recipe(request):
 @api_view(['GET'])
 def get_all_recipe(request):
     # get 10 recipes
-    recipes = Recipe.objects.all()[:10]
+    recipes = Recipe.objects.all()
     return Response(RecipeSerializer(recipes, many=True).data, status=200)
 
 @api_view(['GET'])
@@ -241,6 +241,9 @@ def get_latest_recipes(request):
 @api_view(['DELETE'])
 def delete_recipe(request):
     data = json.loads(request.body.decode('utf-8'))
+    token = data.get('jwt')
+    if not token:
+        return JsonResponse({'error': 'Login required'}, status=401)
     try:
         recipe_id = data.get('recipe_id')
         recipe = Recipe.objects.get(id=recipe_id)
