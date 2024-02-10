@@ -245,7 +245,38 @@ def user_logout(request):
             'message': 'Logout successful'
         }
         return response
+ 
+def update_recipe_tags(recipe_id, user_data):
+    recipe = Recipe.objects.get(pk=recipe_id)
     
+    # Extract data
+    title = user_data.get('title', '')
+    ingredients = user_data.get('ingredients', [])
+    user_tags = user_data.get('tags', [])
+
+
+    # Process ingredients
+    ingredient_names = []
+    for ingredient in ingredients:
+        ingredient_name = ingredient.get('ingredient', '').lower().strip()
+        if ingredient_name:
+            ingredient_names.append(ingredient_name)
+    
+    # print(ingredient_names)
+
+    # Create or retrieve tags
+    all_tags = []
+    for tag_name in set(title.lower().strip().split()) | set(ingredient_names) | set(user_tags):
+        tag, _ = RecipeSearchTags.objects.get_or_create(tag=tag_name)
+        all_tags.append(tag)
+        
+    # print(all_tags)
+
+    # Update recipe tags
+    recipe.recipeSearchTags.clear()
+    recipe.recipeSearchTags.add(*all_tags)
+    recipe.save()
+   
 @csrf_exempt
 @api_view(['POST'])
 def upload_recipe(request):
@@ -283,6 +314,9 @@ def upload_recipe(request):
                     image=step.get('image'),
                     recipe=recipe
                 )
+            
+            # Update tags using the optimized function
+            update_recipe_tags(recipe.id, json_data)
             
             # return the serialized recipe object
             return Response(RecipeSerializer(recipe).data, status=200)
