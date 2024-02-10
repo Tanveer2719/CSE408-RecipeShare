@@ -11,7 +11,28 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
+from django.db.models import Q
 
+def get_recipe_list_from_database(ingredients):
+    print("inside get_recipe_list_from_database")
+    recipes = Recipe.objects.all()
+    for ingredient_name in ingredients:
+        recipes = recipes.filter(Q(recipeSearchTags__tag__iexact=ingredient_name))
+        
+    new_response = []
+    for recipe in recipes:
+        ingredient_names = [ingredient['ingredient'] for ingredient in recipe.ingredients]
+        print(ingredient_names)
+        new_recipe = {
+            "id": recipe.id,
+            "title": recipe.title,
+            "image": recipe.image,
+            "ingredients" : ingredient_names,
+            "link": "",
+            "online": False
+        }
+        new_response.append(new_recipe)
+    return new_response
 
 # helper to identify the user
 def get_user(token):
@@ -35,7 +56,7 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
     response = requests.request("GET", url, headers=headers, params=querystring)
     
     
-    new_response = []
+    new_response = get_recipe_list_from_database(ingredients)
     
     for recipe in response.json():
         # create url-friendly title
@@ -46,14 +67,15 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
                         for ingredient in recipe["usedIngredients"]]
         
         new_recipe = {
+            "id":"",
             "title": recipe["title"],
             "image": recipe["image"],
             "ingredients" : ingredients,
-            "link": f"https://spoonacular.com/recipes/{url_friendly_title}-{recipe['id']}"
+            "link": f"https://spoonacular.com/recipes/{url_friendly_title}-{recipe['id']}",
+            "online": True
         }
         new_response.append(new_recipe)
         
-    
     return new_response
 
 @csrf_exempt
@@ -202,6 +224,8 @@ def getRecipeFromIngredients(request):
     ingredients = json_body.get("ingredients")
     recipe_count = json_body.get("number", "1")
     ignore_pantry = True
+    
+    get_recipe_list_from_database(ingredients)
          
     new_response = get_recipe_list(ingredients, recipe_count, ignore_pantry)
     

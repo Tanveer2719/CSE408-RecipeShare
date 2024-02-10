@@ -37,6 +37,7 @@ urlpatterns = [
     path('user/recipe/update/', user_views.update_recipe, name='update_user_recipe'),
     path('user/recipe/video/add/', user_views.upload_recipe_video, name='upload_user_recipe_video'),
     path('user/recipe/image/add/', user_views.upload_recipe_image, name='upload_user_recipe_video'),
+    
     # user blog
     path('user/blog/get/all/', blog_views.get_user_blogs, name='get_user_blogs'),
     

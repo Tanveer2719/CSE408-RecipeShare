@@ -34,7 +34,7 @@ def get_all_blogs(request):
     # return a json response
     return Response(serializer.data)
 
-@api_view(['GET'])
+@api_view(['POST'])
 def get_user_blogs(request):
     json_data = json.loads(request.body.decode('utf-8'))
     token = json_data.get('jwt')

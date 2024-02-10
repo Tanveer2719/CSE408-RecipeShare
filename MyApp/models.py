@@ -72,10 +72,9 @@ class Recipe(models.Model):
     def __str__(self):
         return self.title
     
-
 class RecipeSteps(models.Model):
     order = models.IntegerField(default=0)
-    step = models.CharField(max_length=200)
+    step = models.CharField(max_length=1000)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     image = models.CharField(max_length=1000, default=None)
     
@@ -91,7 +90,7 @@ class Cuisine(models.Model):
 class BlogPosts(models.Model):
     title = models.CharField(max_length=200)
     image = models.CharField(max_length=1000, default=None)
-    summary = models.CharField(max_length=500, default='')
+    summary = models.CharField(max_length=1000, default='')
     publication_date = models.DateTimeField('publication date')
     last_modification_date = models.DateTimeField('last modification date')
     tags = models.JSONField()
@@ -116,10 +115,10 @@ class BlogComments(models.Model):
     date = models.DateTimeField('date published')
     blog_post = models.ForeignKey(BlogPosts, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the comment
-    
-    
+      
 class RecipeSearchTags(models.Model):
     tag = models.CharField(max_length=200)
     def __str__(self):
         return self.tag
-    
+
+   

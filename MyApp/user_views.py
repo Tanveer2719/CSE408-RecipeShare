@@ -127,6 +127,7 @@ def user_login(request):
 @csrf_exempt   
 @api_view(['POST'])
 def user_details(request):
+    print('inside user details')
     data = json.loads(request.body.decode('utf-8'))
     token = data.get('jwt') 
     print(token)
@@ -136,6 +137,7 @@ def user_details(request):
     
     try:
         user = get_user(token)
+        print(user)
         serializer = UserSerializer(user)
         return Response({'user_details': serializer.data}, status=200)
     except Exception as e:
@@ -164,20 +166,22 @@ def get_notifications(request):
 def get_user_recipes(request):
     data = json.loads(request.body.decode('utf-8'))
     token = data.get('jwt')
-    
     if not token:
-        return Response({'error': 'Unauthenticated'}, status=401)
+        return Response({'error: token not found'}, status=401)
     else:
         try:
             user = get_user(token)  # get user from token
+            if not user:
+                return Response({'error': 'User not found'}, status=401)
+            print(user)
             recipes = Recipe.objects.filter(user=user)
-            serializer = RecipeSerializer(recipes, many=True)
-            return Response({'recipes': serializer.data}, status=200)
+            print(recipes)
+            # recipes = Recipe.objects.all()
+            return Response(RecipeSerializer(recipes, many=True).data, status=200)
         except Exception as e:
             return Response(str(e), status=401)
 
 @csrf_exempt
-
 @api_view(['PUT'])
 def read_notification(request):
     data = json.loads(request.body.decode('utf-8'))
