@@ -18,11 +18,6 @@ def get_user(token):
     payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
     return CustomUser.objects.filter(id=payload['id'])[0]
 
-# Create your views here.
-def index(request):
-    return HttpResponse("Hello from the new app!")
-
-
 def get_recipe_list(ingredients, number, ignorePantry=True):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
         

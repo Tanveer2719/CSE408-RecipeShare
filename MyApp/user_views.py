@@ -8,6 +8,22 @@ from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+# Create your views here.
+
+@api_view(['GET'])
+def refresh(request):
+    print("inside refresh")
+    for recipe in Recipe.objects.all():
+        user_data = {
+            'title': recipe.title,
+            'ingredients': recipe.ingredients,
+            'tags': recipe.tags  # Use existing tags if present
+        }
+        print(user_data)
+        update_recipe_tags(recipe.id, user_data)
+        
+    return Response({'message': 'Refreshed successfully'}, status=200)
+
 @csrf_exempt
 @api_view(['PUT'])
 def update_user_image(request):
@@ -473,3 +489,23 @@ def get_user_details(request):
     user_id = data.get('user_id')
     user = CustomUser.objects.get(id=user_id)
     return Response(UserSerializer(user).data, status=200)
+
+@csrf_exempt
+@api_view(['PUT'])
+def upload_recipe_image(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    token = json_data.get('jwt')
+    
+    if not token:
+        return Response({'error': 'Unauthenticated'}, status=401)
+    try:
+        user = get_user(token)  # get user from token
+                                        
+        # create recipe object
+        recipe = Recipe.objects.get(id=json_data.get('recipe_id'))
+        recipe.image = json_data.get('image')
+        recipe.save()
+        return Response({'message': 'Image uploaded successfully'}, status=200)    
+    except Exception as e:
+        return Response({'error': str(e)}, status=401)
+    
