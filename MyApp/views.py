@@ -177,17 +177,28 @@ def calculateCalorie(request):
         "height":json_data.get('height', "180"),
         "weight":json_data.get("weight", "70"),
         "activitylevel":json_data.get('level', "level_1")
-        }
+    }
     
-    print(querystring)
-
+    goal = json_data.get('goal', "Weight loss")
+    print(goal)
+    
+        
     headers = {
         "X-RapidAPI-Key": settings.CALORIE_CALCULATOR_API_KEY,
         "X-RapidAPI-Host": "fitness-calculator.p.rapidapi.com"
     }
 
-    response = requests.get(url, headers=headers, params=querystring)
-    return JsonResponse({"response": response.json()})
+    response = requests.get(url, headers=headers, params=querystring).json()
+    response = response['data'].get('goals')
+    
+    data = {}
+    
+    if(goal == "maintain weight"):
+        data = {'calorie': response['maintain weight'] }
+    
+    data = {'calorie': response.get('Weight loss').get('calory')}
+        
+    return JsonResponse(data)
 
 @csrf_exempt  
 @api_view(['POST'])
