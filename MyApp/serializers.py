@@ -15,7 +15,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'title','description','cooking_time', 'difficulty_level', 'image','video','ingredients',
-                  'tags','rating','meal_type','last_edited','reviews','steps', 'user')
+                  'tags','servings','calories', 'rating','meal_type','last_edited','reviews','steps', 'user')
 
     def get_steps(self, obj):
         return StepSerializer(obj.recipesteps_set.all(), many=True).data
@@ -26,7 +26,7 @@ class MinimizedRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'title','description','ingredients',
-                  'tags','rating','meal_type','last_edited',)
+                  'tags','rating','meal_type','calories','servings','last_edited')
     
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,25 +82,8 @@ class BlogSerializerForAll(serializers.ModelSerializer):
                   'tags', 'ratings', 'user']
         
         
-# class BlogCommentsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = BlogComments
-#         fields = ['id', 'text', 'date', 'user']
-
-# class BlogSectionsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = BlogSections
-#         fields = ['id', 'title', 'content', 'image', 'order']
-
-# class BlogPostsSerializer(serializers.ModelSerializer):
-    
-#     user = serializers.StringRelatedField()
-#     comments = BlogCommentsSerializer(many=True, read_only=True)
-#     sections = BlogSectionsSerializer(many=True, read_only=True)
-
-#     class Meta:
-#         model = BlogPosts
-#         fields = ['id', 'title', 'summary', 'image', 'publication_date', 'last_modification_date',
-#                   'tags', 'ratings', 'user', 'sections', 'comments']
-
+class IngredientNutritionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IngredientsWithNutrition
+        fields = ['id','name', 'unit','amount',  'calorie', 'fat', 'protein', 'carbohydrate']
         

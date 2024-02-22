@@ -1,3 +1,4 @@
+from RecipeShare.settings import NUTRITIONIX_API_KEY, NUTRITIONIX_APP_ID
 from .serializers import *
 from .views import *
 from MyApp.models import *
@@ -310,14 +311,27 @@ def upload_recipe(request):
         try:
             user = get_user(token)  # get user from token
                         
+            ing = json_data.get('ingredients')
+            serve = json_data.get('servings')
+            
+                
+            # calculate calories
+            calorie = get_nutrition_value(ing)
+            print(calorie)
+
+            
+            # return Response({'message': 'Calories calculated successfully'}, status=200)
+            
             # create recipe object
             recipe = Recipe.objects.create(
                 title=json_data.get('title'),
                 description=json_data.get('description'),
                 cooking_time=json_data.get('cooking_time'),
                 difficulty_level=json_data.get('difficulty_level'),
-                ingredients=json_data.get('ingredients'),
+                ingredients= ing,
                 tags=json_data.get('tags'),
+                calories = calorie/serve,
+                servings=serve,
                 image=json_data.get('image'),
                 video=json_data.get('video'),
                 meal_type=json_data.get('meal_type'),
@@ -513,3 +527,54 @@ def upload_recipe_image(request):
     except Exception as e:
         return Response({'error': str(e)}, status=401)
     
+# check the IngredientsWithNutrition if it has the ingredient
+# if it does then calculate the nutrition value and return it
+# if it does not then send a request and then update the ingredient table and 
+# then calculate the nutrition value and return it
+def get_nutrition_value(ingredient_list):
+    tot_calorie = 0
+    ing_list = ""
+    for i in ingredient_list:
+        ingredient_obj = IngredientsWithNutrition.objects.filter(
+            name__iexact=i.get('ingredient', None).lower(),
+            unit__iexact=i.get('unit', None).lower(),
+            amount=i.get('amount')
+        ).first()
+        if ingredient_obj:
+            tot_calorie += ingredient_obj.calorie
+        else:
+            str_value = str(i.get('amount')) + " " + i.get('unit') + " \'" + i.get('ingredient') + "\'"
+            ing_list += str_value + " ,"
+            
+    if len(ing_list) == 0:
+        return tot_calorie
+    else:
+        url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
+        headers = {
+            "Content-Type": "application/json",
+            "x-app-id": NUTRITIONIX_APP_ID,  # Replace with your Nutritionix app ID
+            "x-app-key": NUTRITIONIX_API_KEY,  # Replace with your Nutritionix app key
+        }
+        data = {"query": ing_list}
+
+        response = requests.post(url, headers=headers, json=data)
+        
+        if response.status_code == 200:
+            foods = response.json().get('foods',[])
+            for food in foods:
+                ingredient = IngredientsWithNutrition.objects.create(
+                name=food.get('food_name'),
+                amount=food.get('serving_qty'),
+                unit=food.get('serving_unit').split()[0],
+                gm_weight=food.get('serving_weight_grams'),
+                calorie=food.get('nf_calories'),
+                fat=food.get('nf_total_fat'),
+                protein=food.get('nf_protein'),
+                carbohydrate=food.get('nf_total_carbohydrate')
+                )
+                ingredient.save()
+                tot_calorie += ingredient.calorie
+            return tot_calorie 
+        else:
+            # Handle error gracefully, e.g., log error, raise exception, return None
+            raise Exception(f"Nutritionix API error: {response.status_code}")

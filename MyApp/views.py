@@ -34,11 +34,6 @@ def get_recipe_list_from_database(ingredients):
         new_response.append(new_recipe)
     return new_response
 
-# helper to identify the user
-def get_user(token):
-    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
-    return CustomUser.objects.filter(id=payload['id'])[0]
-
 def get_recipe_list(ingredients, number, ignorePantry=True):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
         
@@ -77,6 +72,11 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
         new_response.append(new_recipe)
         
     return new_response
+
+# helper to identify the user
+def get_user(token):
+    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
+    return CustomUser.objects.filter(id=payload['id'])[0]
 
 @csrf_exempt
 @api_view(['POST'])
@@ -281,5 +281,14 @@ def delete_recipe(request):
         return Response({'message': 'Recipe deleted successfully'}, status=200)
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+   
+@csrf_exempt
+@api_view(['GET'])
+def getIngredientsWithNutrients(request):
+    #return all from IngredientsWithNutrition
+    ing = IngredientsWithNutrition.objects.all()
+    return Response(IngredientNutritionSerializer(ing, many=True).data, status=200)
     
+    
+     
 

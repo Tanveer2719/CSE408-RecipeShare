@@ -58,8 +58,10 @@ class Recipe(models.Model):
     description = models.CharField(max_length=500, default='')
     cooking_time = models.IntegerField(default=0)
     difficulty_level = models.CharField(max_length=10)
+    servings=models.IntegerField(default=1)
     ingredients = models.JSONField()
     tags = models.JSONField()
+    calories = models.IntegerField(default=0)
     rating = models.IntegerField(default=0)
     meal_type = models.CharField(max_length=200)
     last_edited = models.DateTimeField('last edited', auto_now=True)
@@ -120,5 +122,20 @@ class RecipeSearchTags(models.Model):
     tag = models.CharField(max_length=200)
     def __str__(self):
         return self.tag
+    
+class IngredientsWithNutrition(models.Model):
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=200)
+    amount = models.IntegerField(default=0)
+    gm_weight = models.IntegerField(default=0)
+    calorie = models.IntegerField(default=0)
+    protein = models.IntegerField(default=0)
+    fat = models.IntegerField(default=0)
+    carbohydrate = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return self.ingredient
+    
+
 
    

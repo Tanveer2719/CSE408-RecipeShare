@@ -11,6 +11,9 @@ urlpatterns = [
     path('findrecipe/calorie/', views.getRecipeFromCalorie, name='findRecipeFromCalorie'),
     path('findrecipe/ingredients/', views.getRecipeFromIngredients, name='findRecipeFromIngredients'),
     
+    # test ones
+    path('ingredientwithnutreints/all/', views.getIngredientsWithNutrients, name='ingredientwithnutreints'),
+    
     # user authentication and details
     path('user/login/', user_views.user_login, name='login'),
     path('user/signup/', user_views.user_signup, name='signup'),
