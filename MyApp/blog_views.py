@@ -145,13 +145,28 @@ def add_comment(request):
         user = get_user(token)
         
         data = json.loads(request.body.decode('utf-8'))
+        blog_id = data['blog_id']
         
         comment = BlogComments.objects.create(
             text=data['text'],
             date=timezone.now(),
-            blog_post=BlogPosts.objects.get(id=data['blog_id']),
+            blog_post=BlogPosts.objects.get(id=blog_id),
             user=user
         )
+        comment.save()
+        
+        # update notification table
+        blog = BlogPosts.objects.get(id=blog_id)
+        notification = Notifications.objects.create(
+            notification = user.name + " commented on your blog",
+            date = timezone.now(),
+            user = blog.user,
+            is_recipe = False,
+            blog = blog,
+            recipe=None
+        )
+        notification.save()
+        
         serializer = BlogCommentsSerializer(comment, many=False)
         return Response(serializer.data)
     except Exception as e:

@@ -2,9 +2,10 @@ from rest_framework import serializers
 from .models import *
 
 class NotificationSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Notifications
-        fields = ('id', 'notification', 'date', 'is_read', 'user')
+        fields = ('id', 'notification', 'date','is_recipe','recipe', 'blog','is_read', 'user')
         
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = serializers.JSONField()
@@ -87,8 +88,7 @@ class BlogSerializerForAll(serializers.ModelSerializer):
         model = BlogPosts
         fields = ['id','title','summary','publication_date', 'image', 'last_modification_date',
                   'tags', 'ratings', 'user']
-        
-        
+             
 class IngredientNutritionSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientsWithNutrition

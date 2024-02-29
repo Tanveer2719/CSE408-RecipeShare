@@ -36,16 +36,7 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return self.name
-    
-class Notifications(models.Model):
-    notification = models.CharField(max_length=200)
-    date = models.DateTimeField('date published')
-    is_read = models.BooleanField(default=False)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)   # who receives the notification 
-    
-    def __str__(self):
-        return self.notification
-    
+      
 class Review(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE) # who gives the review
     review = models.CharField(max_length=200)
@@ -152,4 +143,13 @@ class RecipeComments(models.Model):
     recipe_post = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the comment
 
-   
+class Notifications(models.Model):
+    notification = models.CharField(max_length=200)
+    date = models.DateTimeField('date published')
+    is_read = models.BooleanField(default=False)
+    is_recipe = models.BooleanField(default=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)   # who receives the notification 
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, null=True)  # if the notification is recipe related
+    blog = models.ForeignKey(BlogPosts, on_delete=models.CASCADE, null=True)  # if the notification is blog related
+    def __str__(self):
+        return self.notification  

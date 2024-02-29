@@ -642,9 +642,29 @@ def add_comment(request):
             recipe_post=Recipe.objects.get(id=recipe_id),
             user=user
         )
-        print(user)
-
-
+        '''
+        class Notifications(models.Model):
+            notification = models.CharField(max_length=200)
+            date = models.DateTimeField('date published')
+            is_read = models.BooleanField(default=False)
+            user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)   # who receives the notification 
+            
+            def __str__(self):
+                return self.notification
+        '''
+        
+        # update notification table
+        recipe = Recipe.objects.get(id=recipe_id)
+        notification = Notifications.objects.create(
+            notification = user.name + " commented on your recipe",
+            date = date,
+            user = recipe.user,
+            is_recipe = True,
+            recipe = recipe,
+            blog=None
+        )
+        notification.save()
+        
         serializer = RecipeCommentsSerializer(comment, many=False)
         print(serializer.data)
         return Response(RecipeCommentsSerializer(comment).data, status=200)
