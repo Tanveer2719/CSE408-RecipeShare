@@ -1,4 +1,5 @@
 import json
+import math
 from .views import *
 from django.http import JsonResponse
 from rest_framework.response import Response
@@ -8,8 +9,11 @@ from MyApp.serializers import *
 from MyApp.views import get_user
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 
-
+def round_number(number):
+    rounded_number = round(number)
+    return rounded_number
 
 @api_view(['POST'])
 def get_blog(request):
@@ -183,5 +187,45 @@ def delete_comment(request):
         return JsonResponse({'success': 'Comment deleted successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+ 
+
+
+@csrf_exempt
+@api_view(['POST'])
+def add_ratings(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    token = json_data.get('jwt')
+    if not token:
+        return JsonResponse({'error': 'Login required'}, status=401)
+    try:
+        user = get_user(token)
+
+        blog_id = json_data.get('blog_id')
+        ratings = json_data.get('ratings')
+        
+        # Find the blog post
+        blog_post = BlogPosts.objects.get(id=blog_id)
+
+        # Check if the user has already rated this blog post
+        existing_rating = BlogPostRating.objects.filter(blog_post=blog_post, user=user).first()
+
+        if existing_rating:
+            # Update the existing rating
+            existing_rating.ratings = ratings
+            existing_rating.save()
+        else:
+            # Create a new rating
+            BlogPostRating.objects.create(blog_post=blog_post, user=user, ratings=ratings)
+
+        # Calculate the new average rating
+        average_rating = BlogPostRating.objects.filter(blog_post=blog_post).aggregate(Avg('ratings'))['ratings__avg']
+        blog_post.ratings = average_rating
+        blog_post.save()
+
+        # Return the new average rating in the response
+        return JsonResponse({'response':'rating updated successfully'}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=401)
+
     
     

@@ -13,6 +13,7 @@ urlpatterns = [
     
     # test ones
     path('ingredientwithnutreints/all/', views.getIngredientsWithNutrients, name='ingredientwithnutreints'),
+    path('updatecalorie/', views.updateCalorie, name='updateCalorie'),
     
     # user authentication and details
     path('user/login/', user_views.user_login, name='login'),
@@ -49,6 +50,8 @@ urlpatterns = [
     path('recipe/get/all/', views.get_all_recipe, name='get_all_recipe'),
     path('recipe/get/latest/', views.get_latest_recipes, name='get_latest_recipes'),
     path('recipe/delete/', views.delete_recipe, name='delete_recipe'),
+    path('recipe/comment/add/', user_views.add_comment, name='add_comment_recipe'),
+    path('recipe/addrating/', user_views.add_ratings, name='add_ratings_recipe'),
     
     
     #### Blog ####
@@ -59,5 +62,6 @@ urlpatterns = [
     path('blog/delete/', blog_views.delete_blog, name='delete_blog'),
     path('blog/comment/add/', blog_views.add_comment, name='add_comment'),
     path('blog/comment/delete/', blog_views.delete_comment, name='delete_comment'),
+    path('blog/addrating/', blog_views.add_ratings, name='add_ratings'),
 
 ]

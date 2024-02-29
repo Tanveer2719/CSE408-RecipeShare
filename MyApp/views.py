@@ -1,3 +1,5 @@
+from itertools import combinations
+from django.forms import FloatField
 import jwt
 import json
 import requests
@@ -6,12 +8,12 @@ from MyApp.models import *
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.http import HttpResponse, JsonResponse
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
-from django.db.models import Q
+from django.db.models import Q 
+ 
 
 def get_recipe_list_from_database(ingredients):
     print("inside get_recipe_list_from_database")
@@ -73,6 +75,78 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
         
     return new_response
 
+'''
+def get_recipe_list_from_calorie(target_calorie, num_recipes=3, meal_type=None, tolerance=100):
+    tolerance_level = tolerance
+    
+ 
+    # Filter and order recipes based on conditions
+    query = Q()
+         
+    
+    recipes = Recipe.objects.filter(query).annotate(
+        abs_diff=ExpressionWrapper(
+        Func(F('calories') - target_calorie, function='ABS'),
+        output_field=fields.FloatField()
+    )
+    ).order_by('abs_diff')[:num_recipes * 2]  # Fetch potentially twice as many as needed
+     
+    
+    for recipe in recipes:
+        print(recipe.title, recipe.calories, recipe.abs_diff)
+        
+
+    # Select recipes within the tolerance level efficiently
+    matching_recipes = []
+    for recipe in recipes:
+        if abs(recipe.abs_diff) <= tolerance_level:
+            matching_recipes.append({'title': recipe.title, 'calories': recipe.calories})
+            if len(matching_recipes) == num_recipes:
+                break  # Stop once enough recipes are found
+
+    return matching_recipes
+
+
+def get_recipe_list_for_target_calorie(target_calorie, num_recipes=3, tolerance=100):
+    lower_limit = target_calorie - tolerance
+    upper_limit = target_calorie + tolerance
+
+    query = Q()  # Add meal_type filter here if needed
+    recipes = Recipe.objects.filter(query).annotate(
+        abs_diff=F('calories') - target_calorie
+    ).order_by('abs_diff')  # Maintain original order for accurate comparisons
+
+    best_combination = []
+    best_total_calories = None
+
+    for recipe in recipes:
+        calories = recipe.calories
+
+        # Check if this recipe fits within the limits and improves the current best
+        if lower_limit <= calories <= upper_limit and (
+            best_total_calories is None or
+            abs(calories - target_calorie) < abs(best_total_calories - target_calorie)
+        ):
+            current_combination = best_combination + [recipe]
+            current_total_calories = sum(recipe.calories for recipe in current_combination)
+
+            # Only consider combinations with the appropriate number of recipes
+            if len(current_combination) == num_recipes:
+                best_combination = current_combination
+                best_total_calories = current_total_calories
+                break  # Found the best possible combination
+
+    # Handle cases where no matching combinations are found
+    if not best_combination:
+        print("No matching recipes found within the target calorie range.")
+        return []  # Or return an appropriate error response
+
+    # Format the response with the best recipes
+    recipe_data = [{'id': recipe.id, 'title': recipe.title, 'calories': recipe.calories} for recipe in best_combination]
+    return recipe_data  # Or return a JsonResponse with the data
+
+'''  
+    
 # helper to identify the user
 def get_user(token):
     payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
@@ -202,28 +276,36 @@ def calculateCalorie(request):
 
 @csrf_exempt  
 @api_view(['POST'])
-def getRecipeFromCalorie(request):  
+def getRecipeFromCalorie(request): 
     
     url = "https://api.spoonacular.com/mealplanner/generate"
     
     
     json_data = json.loads(request.body.decode('utf-8'))
     
+    timeframe = json_data.get("timeFrame", "day")
+    targetCalories = json_data.get("targetCalories", "2000")
+    diet = json_data.get("diet", "vegetarian")
+    exclude = json_data.get("exclude", ["shellfish","olives"])
+         
     querystring = {
-        "timeFrame": json_data.get("timeFrame", "day"),
-        "targetCalories":json_data.get("targetCalories", "2000"),
-        "diet": json_data.get("diet", str("vegetarian")),
-        "exclude": json_data.get("exclude", ["shellfish","olives"]),
+        "timeFrame": timeframe,
+        "targetCalories":targetCalories,
+        "diet": diet,
+        "exclude": exclude,
         }
     
     print(querystring)
-
+    
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': settings.SPOONACULAR_API_KEY,
         }
 
     response = requests.request("GET", url, headers=headers, params=querystring)
+    
+    # print(get_recipe_list_for_target_calorie(targetCalories))
+    
     return JsonResponse({"response": response.json()})
     
 @csrf_exempt  
@@ -282,6 +364,11 @@ def delete_recipe(request):
     except Exception as e:
         return Response({'error': str(e)}, status=400)
    
+
+"""_summary_
+    Below are the Test Codes to modify the DB
+    Not included in the main workflow
+"""
 @csrf_exempt
 @api_view(['GET'])
 def getIngredientsWithNutrients(request):
@@ -289,6 +376,16 @@ def getIngredientsWithNutrients(request):
     ing = IngredientsWithNutrition.objects.all()
     return Response(IngredientNutritionSerializer(ing, many=True).data, status=200)
     
-    
+@csrf_exempt
+@api_view(['POST'])
+def updateCalorie(request):
+    data = json.loads(request.body.decode('utf-8'))
+    try:
+        recipe = Recipe.objects.get(id=data.get('recipe_id'))
+        recipe.calories = data.get('calories')
+        recipe.save()
+        return Response({'message': 'Calorie updated successfully'}, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)   
      
 

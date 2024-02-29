@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 
 # Create your views here.
 
@@ -578,3 +579,74 @@ def get_nutrition_value(ingredient_list):
         else:
             # Handle error gracefully, e.g., log error, raise exception, return None
             raise Exception(f"Nutritionix API error: {response.status_code}")
+
+
+@csrf_exempt
+@api_view(['POST'])
+def add_ratings(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    token = json_data.get('jwt')
+    if not token:
+        return JsonResponse({'error': 'Login required'}, status=401)
+    try:
+        user = get_user(token)
+
+        data = json.loads(request.body.decode('utf-8'))
+
+        recipe_id = data.get('recipe_id')
+        ratings = data.get('ratings')
+        # Find the recipe post
+        recipe_post = Recipe.objects.get(id=recipe_id)
+        
+        # Check if the user has already rated this blog post
+        existing_rating = RecipePostRating.objects.filter(recipe_post=recipe_post, user=user).first()
+
+        if existing_rating:
+            # Update the existing rating
+            existing_rating.ratings = ratings
+            existing_rating.save()
+        else:
+            # Create a new rating
+            RecipePostRating.objects.create(recipe_post=recipe_post, user=user, ratings=ratings)
+
+        # Calculate the new average rating
+        average_rating = RecipePostRating.objects.filter(recipe_post=recipe_post).aggregate(Avg('ratings'))['ratings__avg']
+        recipe_post.ratings = average_rating
+        recipe_post.save()
+
+        # Return the new average rating in the response
+        return JsonResponse({'average_rating': average_rating}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=401)
+    
+@csrf_exempt
+@api_view(['POST'])
+def add_comment(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    token = json_data.get('jwt')
+    print(token)
+    if not token:
+        return JsonResponse({'error': 'Login required'}, status=401)
+    try:
+        user = get_user(token)
+
+        data = json.loads(request.body.decode('utf-8'))
+        
+        text = data['text']
+        date = timezone.now()
+        recipe_id = data['recipe_id']
+        
+        comment = RecipeComments.objects.create(
+            text=text,
+            date=date,
+            recipe_post=Recipe.objects.get(id=recipe_id),
+            user=user
+        )
+        print(user)
+
+
+        serializer = RecipeCommentsSerializer(comment, many=False)
+        print(serializer.data)
+        return Response(RecipeCommentsSerializer(comment).data, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)    

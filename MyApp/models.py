@@ -62,7 +62,7 @@ class Recipe(models.Model):
     ingredients = models.JSONField()
     tags = models.JSONField()
     calories = models.IntegerField(default=0)
-    rating = models.IntegerField(default=0)
+    ratings = models.FloatField(default=0)
     meal_type = models.CharField(max_length=200)
     last_edited = models.DateTimeField('last edited', auto_now=True)
     reviews = models.ManyToManyField(Review)
@@ -73,7 +73,12 @@ class Recipe(models.Model):
      
     def __str__(self):
         return self.title
-    
+
+class RecipePostRating(models.Model):
+    recipe_post = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    ratings = models.IntegerField()
+   
 class RecipeSteps(models.Model):
     order = models.IntegerField(default=0)
     step = models.CharField(max_length=1000)
@@ -96,11 +101,16 @@ class BlogPosts(models.Model):
     publication_date = models.DateTimeField('publication date')
     last_modification_date = models.DateTimeField('last modification date')
     tags = models.JSONField()
-    ratings = models.IntegerField(default=0)
+    ratings = models.FloatField(default=0)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the blog
 
     def __str__(self):
         return self.title
+    
+class BlogPostRating(models.Model):
+    blog_post = models.ForeignKey(BlogPosts, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    ratings = models.IntegerField()
 
 class BlogSections(models.Model):
     title = models.CharField(max_length=200)
@@ -136,6 +146,10 @@ class IngredientsWithNutrition(models.Model):
     def __str__(self):
         return self.ingredient
     
-
+class RecipeComments(models.Model):
+    text = models.CharField(max_length=200)
+    date = models.DateTimeField('date published')
+    recipe_post = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the comment
 
    
