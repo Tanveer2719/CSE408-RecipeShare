@@ -1,6 +1,5 @@
 from itertools import combinations
 import string
-from django.forms import FloatField
 import jwt
 import json
 import requests
@@ -13,8 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
-from django.db.models import Q 
- 
+from django.db.models import Q
 
 def get_recipe_list_from_database(ingredients):
     print("inside get_recipe_list_from_database")
@@ -76,78 +74,25 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
         
     return new_response
 
-'''
-def get_recipe_list_from_calorie(target_calorie, num_recipes=3, meal_type=None, tolerance=100):
-    tolerance_level = tolerance
-    
- 
-    # Filter and order recipes based on conditions
-    query = Q()
-         
-    
-    recipes = Recipe.objects.filter(query).annotate(
-        abs_diff=ExpressionWrapper(
-        Func(F('calories') - target_calorie, function='ABS'),
-        output_field=fields.FloatField()
-    )
-    ).order_by('abs_diff')[:num_recipes * 2]  # Fetch potentially twice as many as needed
-     
-    
-    for recipe in recipes:
-        print(recipe.title, recipe.calories, recipe.abs_diff)
+def get_recipe_list_for_target_calorie(totalcalorie):
+    totalcalorie = int(totalcalorie)
+    try:
+        all_recipes = Recipe.objects.all()
+
+        # Find all combinations of three recipes and calculate the calorie sum
+        for combination in combinations(all_recipes, 3):
+            calorie_sum = sum(recipe.calories for recipe in combination)
+
+            # if calorie sum is within 100 of the target calorie, return the combination
+            if abs(calorie_sum - totalcalorie) <= 100:
+                return combination
+        return []
+                
+    except Exception as e:
+        print(e)
+        return []
         
-
-    # Select recipes within the tolerance level efficiently
-    matching_recipes = []
-    for recipe in recipes:
-        if abs(recipe.abs_diff) <= tolerance_level:
-            matching_recipes.append({'title': recipe.title, 'calories': recipe.calories})
-            if len(matching_recipes) == num_recipes:
-                break  # Stop once enough recipes are found
-
-    return matching_recipes
-
-
-def get_recipe_list_for_target_calorie(target_calorie, num_recipes=3, tolerance=100):
-    lower_limit = target_calorie - tolerance
-    upper_limit = target_calorie + tolerance
-
-    query = Q()  # Add meal_type filter here if needed
-    recipes = Recipe.objects.filter(query).annotate(
-        abs_diff=F('calories') - target_calorie
-    ).order_by('abs_diff')  # Maintain original order for accurate comparisons
-
-    best_combination = []
-    best_total_calories = None
-
-    for recipe in recipes:
-        calories = recipe.calories
-
-        # Check if this recipe fits within the limits and improves the current best
-        if lower_limit <= calories <= upper_limit and (
-            best_total_calories is None or
-            abs(calories - target_calorie) < abs(best_total_calories - target_calorie)
-        ):
-            current_combination = best_combination + [recipe]
-            current_total_calories = sum(recipe.calories for recipe in current_combination)
-
-            # Only consider combinations with the appropriate number of recipes
-            if len(current_combination) == num_recipes:
-                best_combination = current_combination
-                best_total_calories = current_total_calories
-                break  # Found the best possible combination
-
-    # Handle cases where no matching combinations are found
-    if not best_combination:
-        print("No matching recipes found within the target calorie range.")
-        return []  # Or return an appropriate error response
-
-    # Format the response with the best recipes
-    recipe_data = [{'id': recipe.id, 'title': recipe.title, 'calories': recipe.calories} for recipe in best_combination]
-    return recipe_data  # Or return a JsonResponse with the data
-
-'''  
-    
+     
 # helper to identify the user
 def get_user(token):
     payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
@@ -288,26 +233,58 @@ def getRecipeFromCalorie(request):
     targetCalories = json_data.get("targetCalories", "2000")
     diet = json_data.get("diet", "vegetarian")
     exclude = json_data.get("exclude", ["shellfish","olives"])
+    
+    new_response=[]
          
-    querystring = {
-        "timeFrame": timeframe,
-        "targetCalories":targetCalories,
-        "diet": diet,
-        "exclude": exclude,
-        }
+    combinations = get_recipe_list_for_target_calorie(targetCalories)
     
-    print(querystring)
-    
-    headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': settings.SPOONACULAR_API_KEY,
-        }
+    if combinations:
+        print('found in db')
+        new_response.append({'origin': 'database'})
+        for recipe in combinations:
+            new_recipe = {
+                "id": recipe.id,
+                "title": recipe.title,
+                "image": recipe.image,
+                "link": "",
+                "online": False
+            }
+            new_response.append(new_recipe)  
+    else:
+        print('not found in db')
+        querystring = {
+            "timeFrame": timeframe,
+            "targetCalories":targetCalories,
+            "diet": diet,
+            "exclude": exclude,
+            }
+                
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': settings.SPOONACULAR_API_KEY,
+            }
 
-    response = requests.request("GET", url, headers=headers, params=querystring)
+        
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        
+        
+        new_response.append({'origin': 'online'})
+        for recipe in response.json().get("meals"):
+            new_recipe = {
+                "id": "",
+                "title": recipe["title"],
+                "image": "",
+                "link": recipe["sourceUrl"],
+                "online": True
+            }
+            new_response.append(new_recipe)
+        
+        print(new_response)  
     
-    # print(get_recipe_list_for_target_calorie(targetCalories))
-    
-    return JsonResponse({"response": response.json()})
+    # Send JSON response
+    response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
+    response["Content-Type"] = "application/json"
+    return response
     
 @csrf_exempt  
 @api_view(['POST'])

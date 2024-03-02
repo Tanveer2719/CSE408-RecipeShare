@@ -30,7 +30,7 @@ class MinimizedRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'title','description','ingredients',
-                  'tags','ratings','meal_type','calories','servings','last_edited')
+                  'tags','ratings','meal_type','calories','servings','last_edited', 'image')
     
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
