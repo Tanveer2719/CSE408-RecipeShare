@@ -1,4 +1,5 @@
 from itertools import combinations
+import string
 from django.forms import FloatField
 import jwt
 import json
@@ -444,4 +445,32 @@ def search_recipes(request):
 
     print('Constructed response data:', new_response)
     # Return the response as JSON
-    return JsonResponse(new_response, safe=False)
+    return JsonResponse({'response':new_response}, safe=False)
+
+@csrf_exempt
+@api_view(['POST'])
+def search_recipes2(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    search_query = json_data.get('query')
+    if not search_query:
+        return JsonResponse({'error': 'Search query required'}, status=400)
+    try:
+        # Search for blogs with the given search query
+        # at first split the search query using both commas and spaces
+        search_terms = (
+            search_query.lower().translate(str.maketrans('', '', string.punctuation))
+            .replace(',', ' ')  # Handle any remaining commas
+            .strip()
+            .split()
+        )
+        print(search_terms)
+        search_query = Q()
+        for term in search_terms:
+            # Search blog search tags using Q object and contains operator
+            search_query |= Q(recipeSearchTags__tag__icontains=term)
+        
+        recipes = Recipe.objects.filter(search_query).distinct()
+        serializer = MinimizedRecipeSerializer(recipes, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

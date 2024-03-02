@@ -94,6 +94,8 @@ class BlogPosts(models.Model):
     tags = models.JSONField()
     ratings = models.FloatField(default=0)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the blog
+    blogSearchTags = models.ManyToManyField('BlogSearchTags')
+
 
     def __str__(self):
         return self.title
@@ -120,6 +122,11 @@ class BlogComments(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)   # who uploads the comment
       
 class RecipeSearchTags(models.Model):
+    tag = models.CharField(max_length=200)
+    def __str__(self):
+        return self.tag
+
+class BlogSearchTags(models.Model):
     tag = models.CharField(max_length=200)
     def __str__(self):
         return self.tag

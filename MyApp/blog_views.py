@@ -1,5 +1,5 @@
 import json
-import math
+import string
 from .views import *
 from django.http import JsonResponse
 from rest_framework.response import Response
@@ -11,9 +11,23 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
 
-def round_number(number):
-    rounded_number = round(number)
-    return rounded_number
+def update_blog_tags(blog_id, data):
+    # get blog
+    blog = BlogPosts.objects.get(id=blog_id)
+    
+    # extract data
+    title = data.get('title', '')
+    user_tags = data.get('tags', [])
+    
+    all_tags = []
+    for tag_name in set(title.lower().strip().split()) | set(user_tags):
+        tag, _ = BlogSearchTags.objects.get_or_create(tag=tag_name)
+        all_tags.append(tag)
+        
+    blog.blogSearchTags.clear()
+    blog.blogSearchTags.add(*all_tags)
+    blog.save()
+
 
 @api_view(['POST'])
 def get_blog(request):
@@ -74,7 +88,7 @@ def upload_blog(request):
             tags=data['tags'],
             user=user
         )
-        print(blog)
+        blog.save()
         # add the sections
         for section in data['sections']:
             BlogSections.objects.create(
@@ -84,6 +98,10 @@ def upload_blog(request):
                 image=section['image'],
                 blog_post=blog
             )
+            
+        # Update tags using the optimized function
+        update_blog_tags(blog.id, data)
+        
         serializer = BlogPostsSerializer(blog, many=False)
         return Response(serializer.data)
     except Exception as e:
@@ -128,6 +146,9 @@ def update_blog(request):
                     image=section['image'],
                     blog_post=blog
                 )
+                
+        # Update tags using the optimized function
+        update_blog_tags(blog.id, data)
 
         serializer = BlogPostsSerializer(blog, many=False)
         return Response(serializer.data)
@@ -203,8 +224,6 @@ def delete_comment(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
  
-
-
 @csrf_exempt
 @api_view(['POST'])
 def add_ratings(request):
@@ -242,5 +261,50 @@ def add_ratings(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=401)
 
+@csrf_exempt
+@api_view(['PUT'])
+def update_blog_search_tags(request):
+     
+    # loop through all the existing blogs
+    # extract the tags and title from the blog
+    # create a new tag if it does not exist in the RecipeSearchTags
+    # add the tag to the blog
+    for blog in BlogPosts.objects.all():
+        title = blog.title
+        user_tags = blog.tags
+        all_tags = []
+        for tag_name in set(title.lower().strip().split()) | set(user_tags):
+            tag, _ = BlogSearchTags.objects.get_or_create(tag=tag_name)
+            all_tags.append(tag)
+        blog.blogSearchTags.clear()
+        blog.blogSearchTags.add(*all_tags)
+        blog.save()
+    return JsonResponse({'response':'tags updated successfully'}, status=200)
     
-    
+@csrf_exempt
+@api_view(['POST'])
+def search_blogs(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    search_query = json_data.get('query')
+    if not search_query:
+        return JsonResponse({'error': 'Search query required'}, status=400)
+    try:
+        # Search for blogs with the given search query
+        # at first split the search query using both commas and spaces
+        search_terms = (
+            search_query.lower().translate(str.maketrans('', '', string.punctuation))
+            .replace(',', ' ')  # Handle any remaining commas
+            .strip()
+            .split()
+        )
+        print(search_terms)
+        search_query = Q()
+        for term in search_terms:
+            # Search blog search tags using Q object and contains operator
+            search_query |= Q(blogSearchTags__tag__icontains=term)
+        
+        blogs = BlogPosts.objects.filter(search_query).distinct()
+        serializer = BlogSerializerForAll(blogs, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
