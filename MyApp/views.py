@@ -388,4 +388,60 @@ def updateCalorie(request):
     except Exception as e:
         return Response({'error': str(e)}, status=400)   
      
+@csrf_exempt
+@api_view(['POST'])
+def search_recipes(request):
+    print("what ??")
+    # Get the search parameters from the request body
+    data = json.loads(request.body.decode('utf-8'))
+    print('Received data:', data)
+    name = data.get('name')
+    mealType = data.get('mealType')
+    cuisineType = data.get('cuisineType')
+    ingredients = data.get('ingredients')
+    keywords = data.get('keywords')
+    # Extract individual words from each key-value pair and store in a list
+    search = []
+    for key, value in data.items():
+        words = value.split(",")  # Split the value by commas
+        search.extend(words)  # Add the words to the search list
 
+    print(search)
+    print(ingredients)
+
+    # Query the Recipe model based on the search parameters
+    #recipes = Recipe.objects.all()
+    #print(recipes)
+   # Construct a Q object to combine all search terms using the AND operator
+    search_query = Q()
+    for search_name in search:
+        search_query &= Q(recipeSearchTags_tag_icontains=search_name)
+
+    recipes = Recipe.objects.filter(search_query).distinct()
+    print(recipes)
+
+
+    # Construct the response data
+    new_response = []
+    for recipe in recipes:
+        #ingredient_names = [ingredient['ingredient'] for ingredient in recipe.ingredients]
+        #title_names = [name['name'] for name in recipe.title]
+        #keyword_names=[keywords['keywords'] for keywords in recipe.tags]
+        #print(ingredient_names)
+        #title_names = recipe.title['name']
+        ingredient_names = [ingredient['ingredient'] for ingredient in recipe.ingredients]
+        #tags_list = [tag for tag in recipe.tags]
+        new_recipe = {
+            "id": recipe.id,
+            "title": recipe.title,
+            "image": recipe.image,
+            "ingredients" : ingredient_names,
+            "tags":recipe.tags,
+            "link": "",
+            "online": False
+        }
+        new_response.append(new_recipe)
+
+    print('Constructed response data:', new_response)
+    # Return the response as JSON
+    return JsonResponse(new_response, safe=False)

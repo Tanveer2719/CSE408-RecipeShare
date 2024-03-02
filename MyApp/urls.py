@@ -52,6 +52,7 @@ urlpatterns = [
     path('recipe/delete/', views.delete_recipe, name='delete_recipe'),
     path('recipe/comment/add/', user_views.add_comment, name='add_comment_recipe'),
     path('recipe/addrating/', user_views.add_ratings, name='add_ratings_recipe'),
+    path('recipe/search/', views.search_recipes, name='search'),
     
     
     #### Blog ####
