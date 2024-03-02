@@ -15,27 +15,30 @@ from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
 from django.db.models import Q
 
 def get_recipe_list_from_database(ingredients):
-    print("inside get_recipe_list_from_database")
-    recipes = Recipe.objects.all()
+    # Combine filtering using a single Q object (assuming tags are the primary search criteria)
+    search_options = Q()
     for ingredient_name in ingredients:
-        recipes = recipes.filter(Q(recipeSearchTags__tag__iexact=ingredient_name))
-        
+        search_options |= Q(recipeSearchTags__tag__iexact=ingredient_name)
+
+    # Filter recipes based on combined search criteria
+    filtered_recipes = Recipe.objects.filter(search_options)
+
     new_response = []
-    for recipe in recipes:
+    for recipe in filtered_recipes:
         ingredient_names = [ingredient['ingredient'] for ingredient in recipe.ingredients]
-        print(ingredient_names)
         new_recipe = {
             "id": recipe.id,
             "title": recipe.title,
             "image": recipe.image,
-            "ingredients" : ingredient_names,
-            "link": "",
+            "ingredients": ingredient_names,
+            "link": "",  # Replace with link generation logic if available
             "online": False
         }
         new_response.append(new_recipe)
+        
     return new_response
 
-def get_recipe_list(ingredients, number, ignorePantry=True):
+def get_recipe_list_from_online(ingredients, number, ignorePantry=True):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
         
     querystring = {
@@ -51,8 +54,7 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
     
     response = requests.request("GET", url, headers=headers, params=querystring)
     
-    
-    new_response = get_recipe_list_from_database(ingredients)
+    new_response = []
     
     for recipe in response.json():
         # create url-friendly title
@@ -71,7 +73,17 @@ def get_recipe_list(ingredients, number, ignorePantry=True):
             "online": True
         }
         new_response.append(new_recipe)
-        
+    return new_response
+    
+def get_recipe_list(ingredients, number, ignorePantry=True):
+    
+    new_response = get_recipe_list_from_database(ingredients)
+    # if new_response size is less than number then update number and look for recipes online
+    
+    if(len(new_response) < number):
+        number = number - len(new_response)
+        new_response += get_recipe_list_from_online(ingredients, number, ignorePantry)
+          
     return new_response
 
 def get_recipe_list_for_target_calorie(totalcalorie):
@@ -174,11 +186,15 @@ def photoInfo(request):
         
         ingredients = []
         for concept in output.data.concepts:
-            if concept.value * 100 > 5:
+            if concept.value * 100 > 50:
                 ingredients.append({"name": concept.name, "percentage": concept.value*100})
-                FINAL_INGREDIENTS_LIST.add(concept.name)   
+                FINAL_INGREDIENTS_LIST.add(concept.name)  
     
-    new_response = get_recipe_list(list(FINAL_INGREDIENTS_LIST), 10, True)    
+    print(list(FINAL_INGREDIENTS_LIST))
+    
+    new_response = get_recipe_list(list(FINAL_INGREDIENTS_LIST), 10, True) 
+    
+    # print(new_response)   
 
     # Send JSON response
     response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
