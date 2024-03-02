@@ -85,12 +85,12 @@ def get_recipe_list_for_target_calorie(totalcalorie):
 
             # if calorie sum is within 100 of the target calorie, return the combination
             if abs(calorie_sum - totalcalorie) <= 100:
-                return combination
-        return []
+                return (combination, calorie_sum)
+        return ([], 0)
                 
     except Exception as e:
         print(e)
-        return []
+        return ([],0)
         
      
 # helper to identify the user
@@ -236,11 +236,11 @@ def getRecipeFromCalorie(request):
     
     new_response=[]
          
-    combinations = get_recipe_list_for_target_calorie(targetCalories)
+    combinations, calorie_sum = get_recipe_list_for_target_calorie(targetCalories)
     
     if combinations:
         print('found in db')
-        new_response.append({'origin': 'database'})
+        new_response.append({'origin': 'database', 'calories': calorie_sum})
         for recipe in combinations:
             new_recipe = {
                 "id": recipe.id,
@@ -266,10 +266,12 @@ def getRecipeFromCalorie(request):
 
         
         response = requests.request("GET", url, headers=headers, params=querystring)
-        
-        
-        new_response.append({'origin': 'online'})
-        for recipe in response.json().get("meals"):
+        # print(response.json())
+        response = response.json()
+        # calories = response['nutrients']['calories']
+        calories = response.get('nutrients').get('calories')
+        new_response.append({'origin': 'online', 'calories':calories})
+        for recipe in response.get("meals"):
             new_recipe = {
                 "id": "",
                 "title": recipe["title"],
@@ -278,9 +280,7 @@ def getRecipeFromCalorie(request):
                 "online": True
             }
             new_response.append(new_recipe)
-        
-        print(new_response)  
-    
+            
     # Send JSON response
     response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
     response["Content-Type"] = "application/json"
