@@ -131,52 +131,54 @@ def photoInfo(request):
     # This will be used by every Clarifai endpoint call.
     userDataObject = resources_pb2.UserAppIDSet(user_id=USER_ID, app_id=APP_ID)
     
-    # Generate the post model outputs request
-    post_model_output_request = service_pb2.PostModelOutputsRequest(
-        user_app_id=userDataObject,  # The userDataObject is created in the overview and is required when using a PAT
-        model_id=MODEL_ID,
-        version_id=MODEL_VERSION_ID,  # This is optional. Defaults to the latest model version
-        inputs=[
-            resources_pb2.Input(
-                data=resources_pb2.Data(
-                    image=resources_pb2.Image(
-                        url=IMAGE_URL
-                        #base64=image_base64
+    # create the ingredients array
+    FINAL_INGREDIENTS_LIST = set() 
+    for image in IMAGE_URL:
+        # Generate the post model outputs request
+        post_model_output_request = service_pb2.PostModelOutputsRequest(
+            user_app_id=userDataObject,  # The userDataObject is created in the overview and is required when using a PAT
+            model_id=MODEL_ID,
+            version_id=MODEL_VERSION_ID,  # This is optional. Defaults to the latest model version
+            inputs=[
+                resources_pb2.Input(
+                    data=resources_pb2.Data(
+                        image=resources_pb2.Image(
+                            url=image
+                            #base64=image_base64
+                        )
                     )
                 )
-            )
-        ]
-    )
-    
-    # Make the API call and handle errors
-    try:
-        post_model_outputs_response = stub.PostModelOutputs(
-            post_model_output_request,
-            metadata=metadata
+            ]
         )
-    except Exception as e:
-        print("Error while calling the API: %s" % e)
-        raise e
+        
+        # Make the API call and handle errors
+        try:
+            post_model_outputs_response = stub.PostModelOutputs(
+                post_model_output_request,
+                metadata=metadata
+            )
+        except Exception as e:
+            print("Error while calling the API: %s" % e)
+            raise e
+        
     
-   
-    # Since we have one input, one output will exist here
-    output = post_model_outputs_response.outputs[0]
+        # Since we have one input, one output will exist here
+        output = post_model_outputs_response.outputs[0]
 
-    # print("Predicted concepts:")
-    # for concept in output.data.concepts:
-    #     print("%s %.2f" % (concept.name, concept.value))
+        # print("Predicted concepts:")
+        # for concept in output.data.concepts:
+        #     print("%s %.2f" % (concept.name, concept.value))
 
-    # # Uncomment this line to print the full Response JSON
-    # print(output)
+        # # Uncomment this line to print the full Response JSON
+        # print(output)
+        
+        ingredients = []
+        for concept in output.data.concepts:
+            if concept.value * 100 > 5:
+                ingredients.append({"name": concept.name, "percentage": concept.value*100})
+                FINAL_INGREDIENTS_LIST.add(concept.name)   
     
-    ingredients = []
-    ingredients_name=[]
-    for concept in output.data.concepts:
-        if concept.value * 100 > 5:
-            ingredients.append({"name": concept.name, "percentage": concept.value*100})
-            ingredients_name.append(concept.name)   
-    
-    new_response = get_recipe_list(ingredients_name, 10, True)    
+    new_response = get_recipe_list(list(FINAL_INGREDIENTS_LIST), 10, True)    
 
     # Send JSON response
     response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
