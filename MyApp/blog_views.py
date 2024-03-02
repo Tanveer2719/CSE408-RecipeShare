@@ -308,3 +308,18 @@ def search_blogs(request):
         return Response(serializer.data)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+    
+@csrf_exempt
+@api_view(['POST'])
+def get_blogs_from_user_id(request):
+    json_data = json.loads(request.body.decode('utf-8'))
+    user_id = json_data.get('user_id')
+    if not user_id:
+        return JsonResponse({'error': 'User id required'}, status=400)
+    try:
+        # Search for blogs with the given search query
+        blogs = BlogPosts.objects.filter(user_id=user_id)
+        serializer = BlogSerializerForAll(blogs, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

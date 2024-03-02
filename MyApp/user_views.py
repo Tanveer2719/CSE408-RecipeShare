@@ -669,4 +669,19 @@ def add_comment(request):
         print(serializer.data)
         return Response(RecipeCommentsSerializer(comment).data, status=200)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)    
+        return JsonResponse({'error': str(e)}, status=400) 
+    
+@csrf_exempt
+@api_view(['POST'])
+def get_recipe_from_user_id(request): 
+    # get all the recipes of the user id 
+    data = json.loads(request.body.decode('utf-8'))
+    user_id = data.get('user_id')
+    if not user_id:
+        return Response({'error': 'User id required'}, status=401)
+    try:
+        recipes = Recipe.objects.filter(user=user_id)
+        return Response(MinimizedRecipeSerializer(recipes, many=True).data, status=200)
+    except:
+        return Response({'error': 'User not found'}, status=401)
+      
