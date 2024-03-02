@@ -15,14 +15,15 @@ from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
 from django.db.models import Q
 
 def get_recipe_list_from_database(ingredients):
+    
     # Combine filtering using a single Q object (assuming tags are the primary search criteria)
     search_options = Q()
     for ingredient_name in ingredients:
         search_options |= Q(recipeSearchTags__tag__iexact=ingredient_name)
 
     # Filter recipes based on combined search criteria
-    filtered_recipes = Recipe.objects.filter(search_options)
-
+    filtered_recipes = Recipe.objects.filter(search_options).distinct()
+    
     new_response = []
     for recipe in filtered_recipes:
         ingredient_names = [ingredient['ingredient'] for ingredient in recipe.ingredients]
@@ -40,7 +41,7 @@ def get_recipe_list_from_database(ingredients):
 
 def get_recipe_list_from_online(ingredients, number, ignorePantry=True):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
-        
+      
     querystring = {
         "ingredients":ingredients,
         "number": str(number),
@@ -52,38 +53,43 @@ def get_recipe_list_from_online(ingredients, number, ignorePantry=True):
         'x-api-key': settings.SPOONACULAR_API_KEY,
     }
     
-    response = requests.request("GET", url, headers=headers, params=querystring)
-    
-    new_response = []
-    
-    for recipe in response.json():
-        # create url-friendly title
-        url_friendly_title = recipe.get("title", "").lower().replace(" ", "-")
-        ingredients = [ingredient["name"] 
-                       for ingredient in recipe["missedIngredients"]
-                       ] + [ingredient["name"]
-                        for ingredient in recipe["usedIngredients"]]
+    try:
+        response = requests.request("GET", url, headers=headers, params=querystring)        
+        new_response = []
+        for recipe in response.json():
+            # create url-friendly title
+            url_friendly_title = recipe.get("title", "").lower().replace(" ", "-")
+            ingredients = [ingredient["name"] 
+                        for ingredient in recipe["missedIngredients"]
+                        ] + [ingredient["name"]
+                            for ingredient in recipe["usedIngredients"]]
+            
+            new_recipe = {
+                "id":"",
+                "title": recipe["title"],
+                "image": recipe["image"],
+                "ingredients" : ingredients,
+                "link": f"https://spoonacular.com/recipes/{url_friendly_title}-{recipe['id']}",
+                "online": True
+            }
+            new_response.append(new_recipe)
         
-        new_recipe = {
-            "id":"",
-            "title": recipe["title"],
-            "image": recipe["image"],
-            "ingredients" : ingredients,
-            "link": f"https://spoonacular.com/recipes/{url_friendly_title}-{recipe['id']}",
-            "online": True
-        }
-        new_response.append(new_recipe)
-    return new_response
+        return new_response
     
+    except requests.RequestException as e:
+        print(f"Error during API request: {e}")
+        return []  # Or raise an exception, log, etc.
+  
 def get_recipe_list(ingredients, number, ignorePantry=True):
     
+    number = int(number)
     new_response = get_recipe_list_from_database(ingredients)
-    # if new_response size is less than number then update number and look for recipes online
     
-    if(len(new_response) < number):
-        number = number - len(new_response)
-        new_response += get_recipe_list_from_online(ingredients, number, ignorePantry)
-          
+    if len(new_response) >= number:
+        print('true')
+        return new_response
+
+    new_response += get_recipe_list_from_online(ingredients, number - len(new_response), ignorePantry)    
     return new_response
 
 def get_recipe_list_for_target_calorie(totalcalorie):
@@ -103,8 +109,7 @@ def get_recipe_list_for_target_calorie(totalcalorie):
     except Exception as e:
         print(e)
         return ([],0)
-        
-     
+            
 # helper to identify the user
 def get_user(token):
     payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGO])        
@@ -311,13 +316,11 @@ def getRecipeFromIngredients(request):
     json_body = json.loads(request.body.decode('utf-8'))
     
     ingredients = json_body.get("ingredients")
-    recipe_count = json_body.get("number", "1")
+    recipe_count = json_body.get("number", 1)
     ignore_pantry = True
-    
-    get_recipe_list_from_database(ingredients)
-         
+          
     new_response = get_recipe_list(ingredients, recipe_count, ignore_pantry)
-    
+        
     # Send JSON response
     response = JsonResponse(new_response, safe=False)  # Avoid unnecessary escaping for complex data
     response["Content-Type"] = "application/json"
