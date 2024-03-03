@@ -373,39 +373,62 @@ def update_recipe(request):
             user = get_user(token)  # get user from token
                                         
             # create recipe object
-            recipe = Recipe.objects.get(id=json_data.get('recipe_id'))
+            recipe = Recipe.objects.get(id=json_data.get('id'))
             
             if not recipe:
                 return Response({'error': 'Invalid recipe id'}, status=401)
             
+            user = get_user(token)  # get user from token
+                        
+            ing = json_data.get('ingredients')
+            serve = json_data.get('servings')
+            
+                
+            # calculate calories
+            calorie = get_nutrition_value(ing)
+            print(calorie)
+
+            
+            # return Response({'message': 'Calories calculated successfully'}, status=200)
+            
             recipe.title=json_data.get('title')
-            recipe.cooking_time=json_data.get('cooking_time')
+            recipe.description=json_data.get('description')
+            # cooking_time = json_data.get('cooking_time')
+            # print(type(cooking_time))
+            recipe.cooking_time=int(json_data.get('cooking_time'))
             recipe.difficulty_level=json_data.get('difficulty_level')
-            recipe.ingredients=json_data.get('ingredients')
+            recipe.ingredients= ing
             recipe.tags=json_data.get('tags')
-            recipe.meal_type=json_data.get('meal_type')
+            recipe.calories = calorie/serve
+            recipe.servings=serve
             recipe.image=json_data.get('image')
             recipe.video=json_data.get('video')
+            recipe.meal_type=json_data.get('meal_type')
             # current date and time
-            recipe.last_edited=timezone.now()
-
+            recipe.last_edited= datetime.now()
             recipe.user = user
             
             recipe.save()
             
+            #update recipe steps
+            RecipeSteps.objects.filter(recipe=recipe).delete()
             # create recipe steps
             for step in json_data.get('steps'):
-                # get the step object
-                step_obj = RecipeSteps.objects.get(recipe=recipe, order=step.get('order'))
-                #update the step object
-                step_obj.step=step.get('step')
-                step_obj.image=step.get('image')
-                step_obj.save()
+                RecipeSteps.objects.create(
+                    order=step.get('order'),
+                    step=step.get('step'),
+                    image=step.get('image'),
+                    recipe=recipe
+                )
+            
+            # Update tags using the optimized function
+            update_recipe_tags(recipe.id, json_data)
             
             # return the serialized recipe object
             return Response(RecipeSerializer(recipe).data, status=200)
         
         except Exception as e:
+            print(e)
             return Response(str(e), status=401)
 
 @csrf_exempt  
