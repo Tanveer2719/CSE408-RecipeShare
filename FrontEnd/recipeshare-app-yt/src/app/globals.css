@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* styles.css or App.css */
+.slick-container {
+  width: 80%; /* Set the width of the slider container */
+  margin: 0 auto 30px; /* Center the slider horizontally and add bottom margin */
+}
+
+.slick-slide {
+  text-align: center; /* Center the slide content */
+  padding: 0 10px; /* Add horizontal padding to create space between slides */
+}
+
+.slick-image {
+  width: 700px;
+  max-height: 400px; /* Set a maximum height if needed */
+  border-radius: 10px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Customize the dots (pagination) */
+.slick-dots li button:before {
+  font-size: 12px; /* Adjust the size of the dot */
+  color: #ffffff; /* Change the color of the dot */
+}
+
+/* Optional: Add additional styling for arrows if needed */
+.slick-prev,
+.slick-next {
+  font-size: 24px; /* Adjust the size of the arrows */
+  color: #ffffff; /* Change the color of the arrows */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.5
+  ); /* Semi-transparent background for the arrows */
+  border-radius: 50%; /* Make the arrows circular */
+  width: 40px; /* Set the width of the arrows */
+  height: 40px; /* Set the height of the arrows */
+  line-height: 40px; /* Center the arrow icon vertically */
+}
+
+/* Optional: Hide the arrows on hover */
+.slick-prev:hover,
+.slick-next:hover {
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.8
+  ); /* Darken the background color on hover */
+}
+
+.bg-container {
+  @apply relative; /* Enable fixed positioning for background */
+}
+
+.bg-image {
+  @apply fixed top-0 left-0 w-full h-full object-center  bg-no-repeat z-0;
+  z-index: -2; /* Send the background image behind other content */
+  /* filter: blur(var(--bg-image-blur, 2px)); */
+  background-size: 100%;
+}
+
+.bg-image2 {
+  @apply fixed top-3 bottom-3 w-full h-full object-cover  bg-no-repeat z-0;
+  z-index: -1; /* Send the background image behind other content */
+  filter: blur(var(--bg-image-blur, 2px));
+  background-size: cover;
+}
