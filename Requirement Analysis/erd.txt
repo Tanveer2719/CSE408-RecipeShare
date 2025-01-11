@@ -1,0 +1,112 @@
+Recipes Table
+
+RecipeID (Primary Key)
+UserID (Foreign Key referencing Users.UserID)	
+review id	
+Title
+Description			// cooking procedure		
+Cooking Time
+Difficulty Level
+ingredients 		<array>
+tags			<array>
+notes wtih tips
+rating
+meal_type 		<breakfast, lunch, dinner>
+latest_edited 		<date and time>
+
+
+cuisine
+
+id
+name			<indian, italian, thai, french, chinese, appteizer, desert>
+recipe_id		<array of recipe_id>	
+description
+
+
+
+
+
+
+Review:
+
+id
+user id
+recipe id
+description
+
+
+
+
+Users Table:
+
+UserID (Primary Key)
+Username
+Email
+image
+recipes 		<array of recipe_id uploaded>
+notifications
+
+
+
+
+notifications
+
+id
+user_id
+message
+
+
+images
+
+imageID (Primary Key)
+RecipeID (Foreign Key referencing Recipes.RecipeID)
+Image URL or Binary Data
+Caption
+Upload Date
+
+
+
+////// 
+blog search
+	- latest <timestamp>
+	- popular <rating>
+	
+			///////
+
+
+
+BlogPosts Table:
+
+BlogPostID (Primary Key)
+UserID (Foreign Key referencing Users.UserID)
+Title
+Content (text or rich text formatting)
+Publication Date
+Last Modification Date
+Tags
+ratings
+
+
+BlogPostImages Table:
+
+BlogPostImageID (Primary Key)
+BlogPostID (Foreign Key referencing BlogPosts.BlogPostID)
+Image URL or Binary Data
+Caption
+Upload Date
+
+
+BlogComments Table:
+
+BlogCommentID (Primary Key)
+BlogPostID (Foreign Key referencing BlogPosts.BlogPostID)
+UserID (Foreign Key referencing Users.UserID)
+Comment Text
+Date and time
+
+
+
+
+
+
+
